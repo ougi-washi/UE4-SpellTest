@@ -90,11 +90,6 @@ void AProjectile::OnCollisionBeginOverlap_Native(UPrimitiveComponent* Overlapped
 	OnCollisionBeginOverlap(OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }
 
-void AProjectile::ServerSpawnEmitterAtLocation_Implementation(UParticleSystem* EmitterTemplate, FVector Location, FRotator Rotation /*= FRotator::ZeroRotator*/, FVector Scale /*= FVector(1.f)*/, bool bAutoDestroy /*= true*/, EPSCPoolMethod PoolingMethod /*= EPSCPoolMethod::None*/, bool bAutoActivateSystem /*= true*/)
-{
-	UGameplayStatics::SpawnEmitterAtLocation(this, EmitterTemplate, Location, Rotation, Scale, bAutoDestroy, PoolingMethod, bAutoActivateSystem);
-}
-
 void AProjectile::MulticastSpawnEmitterAtLocation_Implementation(UParticleSystem* EmitterTemplate, FVector Location, FRotator Rotation /*= FRotator::ZeroRotator*/, FVector Scale /*= FVector(1.f)*/, bool bAutoDestroy /*= true*/, EPSCPoolMethod PoolingMethod /*= EPSCPoolMethod::None*/, bool bAutoActivateSystem /*= true*/)
 {
 	UGameplayStatics::SpawnEmitterAtLocation(this, EmitterTemplate, Location, Rotation, Scale, bAutoDestroy, PoolingMethod, bAutoActivateSystem);
