@@ -9,7 +9,7 @@
 class USphereComponent;
 class UProjectileMovementComponent;
 
-UCLASS()
+UCLASS(Abstract)
 class SPELLTEST_API AProjectile : public AActor
 {
 	GENERATED_BODY()
@@ -26,10 +26,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	uint8 bDestroyOnHit : 1;
 
-	/** Property replication */
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	uint8 bAffectOwner : 1;
 
+	UPROPERTY()
+	uint8 bHasHit : 1;
 
 protected:
 	// Called when the game starts or when spawned
@@ -38,5 +42,26 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	/** Property replication */
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void InitProjectile(const FVector InitialDirection, AActor* TargetActor);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool ApplyProjectileEffects(AActor* HitActor);
+
+	UFUNCTION()
+	virtual void OnCollisionBeginOverlap_Native(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnCollisionBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(Server, Unreliable, BlueprintCallable)
+	void ServerSpawnEmitterAtLocation(UParticleSystem* EmitterTemplate, FVector Location, FRotator Rotation = FRotator::ZeroRotator, FVector Scale = FVector(1.f), bool bAutoDestroy = true, EPSCPoolMethod PoolingMethod = EPSCPoolMethod::None, bool bAutoActivateSystem = true);
+
+	UFUNCTION(NetMulticast, Unreliable, BlueprintCallable)
+	void MulticastSpawnEmitterAtLocation(UParticleSystem* EmitterTemplate, FVector Location, FRotator Rotation = FRotator::ZeroRotator, FVector Scale = FVector(1.f), bool bAutoDestroy = true, EPSCPoolMethod PoolingMethod = EPSCPoolMethod::None, bool bAutoActivateSystem = true);
 
 };
