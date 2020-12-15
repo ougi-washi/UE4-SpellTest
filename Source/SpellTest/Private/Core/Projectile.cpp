@@ -74,7 +74,7 @@ void AProjectile::OnCollisionBeginOverlap_Native(UPrimitiveComponent* Overlapped
 {
 	if (HasAuthority()) {
 		// Check if the owner can be affected or not
-		if (bAffectOwner || OtherActor != GetOwner()) {
+		if ((bAffectOwner || OtherActor != GetOwner()) && (Cast<APawn>(OtherActor))) {
 			// Execute spell effects here
 			if (!bHasHit) {
 				ApplyProjectileEffects(OtherActor);
