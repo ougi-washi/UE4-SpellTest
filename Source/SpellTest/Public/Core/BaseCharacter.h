@@ -46,13 +46,27 @@ public:
 
 	/** Property replication */
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+	/** Traces from the cross-hair (middle of the screen to a certain range passed into the arguments). Does not replicate.
+	 * @param OutHit - Is the output HitResult when the trace hits.
+	 * @param Direction - Is the direction of the screen.
+	 * @param CollisionChannel - Is the collision channel to be able to hit in the trace.
+	 * @param Distance - Is the Distance of the trace to accept (Range).
+	 * @param bDebug - Whether display the trace or not (for debug purpose).
+	 * @return Whether it has hit or not.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Trace")
-	bool CrosshairTrace(FHitResult &OutHit, FVector &Direction, const ECollisionChannel CollisionChannel = ECC_Pawn,const float Distance = 2000.f, const bool bDebug = false);
-
+	bool CrosshairTrace(FHitResult &OutHit, FVector &Direction, const ECollisionChannel CollisionChannel = ECC_Pawn, const float Distance = 2000.f, const bool bDebug = false);
+	/** Spawns a projectile after making a trace on a target found in the trace if the projectile is homing or just with a constant velocity in the screen direction. The tracing doesn't replicate but the spawning replicates.
+	 * @param ProjectileClass - Is the projectile class to spawn.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	void SpawnProjectileByCrosshair(TSubclassOf<AProjectile> ProjectileClass);
-
+	/** Spawns a projectile on the server and initialize it with the given arguments.
+	 * @param ProjectileClass - Is the projectile class to spawn.
+	 * @param Transform - Is the transform of the projectile to be spawned with.
+	 * @param IntialDirection - Is the initial direction to set to the projectile.
+	 * @param TargetActor - Is the actor to home towards in case it's a homing projectile.
+	 */
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Projectile")
 	void ServerSpawnProjectile(TSubclassOf<AProjectile> ProjectileClass, const FTransform& Transform, const FVector IntialDirection, AActor* TargetActor);
 	
