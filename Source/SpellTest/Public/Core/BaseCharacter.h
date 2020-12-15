@@ -26,12 +26,12 @@ public:
 	FName ProjectileSpawnSocket = "Head";
 
 	UPROPERTY(BlueprintReadWrite)
-	TArray<AActor*> Targets;
+	TArray<AActor*> SavedTargets;
+
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bIsSavingTargets :1 ;
 
 protected:
-	
-	UPROPERTY()
-	AActor* LastSpawnedActorRef;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -56,6 +56,25 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Trace")
 	bool CrosshairTrace(FHitResult &OutHit, FVector &Direction, const ECollisionChannel CollisionChannel = ECC_Pawn, const float Distance = 2000.f, const bool bDebug = false);
+	UFUNCTION(BlueprintCallable, Category = "Trace|Targetting")
+	void StartSavingTargets();
+	UFUNCTION(BlueprintCallable, Category = "Trace|Targetting")
+	void ProcessSavingTargets();
+	UFUNCTION(BlueprintCallable, Category = "Trace|Targetting")
+	void EndSavingTargets();
+	UFUNCTION(BlueprintImplementableEvent, Category = "Trace|Targetting")
+	void OnEndSavingTargets(const TArray<AActor*>& TargetActors);
+	virtual void OnEndSavingTargets_Native(const TArray<AActor*>& TargetActors);
+	UFUNCTION(BlueprintCallable, Category = "Trace|Targetting")
+	void AddActorToSavedTargets(AActor* TargetActor);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Trace|Targetting")
+	void OnAddActorToSavedTargets(AActor* TargetActor);
+	virtual void OnAddActorToSavedTargets_Native(AActor* TargetActor);
+	/** 
+	 * @return The vector representing the location of the spell spawning socket.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	FVector GetProjectileSpawnLocation();
 	/** Spawns a projectile after making a trace on a target found in the trace if the projectile is homing or just with a constant velocity in the screen direction. The tracing doesn't replicate but the spawning replicates.
 	 * @param ProjectileClass - Is the projectile class to spawn.
 	 */
@@ -69,5 +88,22 @@ public:
 	 */
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Projectile")
 	void ServerSpawnProjectile(TSubclassOf<AProjectile> ProjectileClass, const FTransform& Transform, const FVector IntialDirection, AActor* TargetActor);
-	
+	/** Spawns an array of projectiles on the server and initialize them with the given arguments.
+	 * @param ProjectileClass - Is the projectile class to spawn.
+	 * @param Transform - Is the transform of the projectile to be spawned with.
+	 * @param IntialDirection - Is the initial direction to set to the projectile.
+	 * @param TargetActors - Are the actors to home towards in case it's a homing projectile.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	void SpawnMultipleProjectiles(TSubclassOf<AProjectile> ProjectileClass, const FTransform& Transform, const FVector IntialDirection, TArray<AActor*>TargetActors);
+	/** Spawns an array of projectiles on the server and initialize them with the given arguments.
+	 * @param ProjectileClass - Is the projectile class to spawn.
+	 * @param Transform - Is the transform of the projectile to be spawned with.
+	 * @param IntialDirection - Is the initial direction to set to the projectile.
+	 * @param TargetActors - Are the actors to home towards in case it's a homing projectile.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	void SpawnMultipleProjectilesOnSavedActors(TSubclassOf<AProjectile> ProjectileClass);
+
+
 };

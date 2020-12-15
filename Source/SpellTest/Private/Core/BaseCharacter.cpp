@@ -12,21 +12,22 @@ ABaseCharacter::ABaseCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	bIsSavingTargets = false;
 }
 
 // Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	// Check if there are targets in the range of the crosshair every tick to add to the array.
+	if (bIsSavingTargets)
+		ProcessSavingTargets();
 }
 
 // Called to bind functionality to input
@@ -63,6 +64,48 @@ bool ABaseCharacter::CrosshairTrace(FHitResult& OutHit, FVector &Direction, cons
 	return false;
 }
 
+void ABaseCharacter::StartSavingTargets()
+{
+	SavedTargets.Empty();
+	bIsSavingTargets = true;
+}
+
+void ABaseCharacter::ProcessSavingTargets()
+{
+	FHitResult OutHit;
+	FVector Direction;
+	if (CrosshairTrace(OutHit, Direction, ECC_Pawn, TargettingRange, false))
+		if (!SavedTargets.Contains(OutHit.GetActor()))
+			AddActorToSavedTargets(OutHit.GetActor());
+}
+
+void ABaseCharacter::EndSavingTargets()
+{
+	bIsSavingTargets = false;
+	OnEndSavingTargets_Native(SavedTargets);
+}
+
+void ABaseCharacter::OnEndSavingTargets_Native(const TArray<AActor*>& TargetActors)
+{
+	OnEndSavingTargets(TargetActors);
+}
+
+void ABaseCharacter::AddActorToSavedTargets(AActor* TargetActor)
+{
+	SavedTargets.AddUnique(TargetActor);
+	OnAddActorToSavedTargets_Native(TargetActor);
+}
+
+void ABaseCharacter::OnAddActorToSavedTargets_Native(AActor* TargetActor)
+{
+	OnAddActorToSavedTargets(TargetActor);
+}
+
+FVector ABaseCharacter::GetProjectileSpawnLocation()
+{
+	return GetMesh()->GetSocketLocation(ProjectileSpawnSocket);
+}
+
 void ABaseCharacter::SpawnProjectileByCrosshair(TSubclassOf<AProjectile> ProjectileClass)
 {
 	// Process the trace
@@ -84,4 +127,21 @@ void ABaseCharacter::ServerSpawnProjectile_Implementation(TSubclassOf<AProjectil
 		if (Projectile)
 			Projectile->InitProjectile(IntialDirection, TargetActor);
 	}
+}
+
+void ABaseCharacter::SpawnMultipleProjectiles(TSubclassOf<AProjectile> ProjectileClass, const FTransform& Transform, const FVector IntialDirection, TArray<AActor*>TargetActors)
+{
+	for (AActor* TargetActor : TargetActors)
+	{
+		ServerSpawnProjectile(ProjectileClass, Transform, IntialDirection, TargetActor);
+	}
+}
+
+void ABaseCharacter::SpawnMultipleProjectilesOnSavedActors(TSubclassOf<AProjectile> ProjectileClass)
+{
+	FHitResult OutHit;
+	FVector CrosshairDirection;
+	CrosshairTrace(OutHit, CrosshairDirection, ECC_Pawn, TargettingRange);
+	FVector InitialDirection = UKismetMathLibrary::GetDirectionUnitVector(GetProjectileSpawnLocation(), OutHit.TraceEnd);
+	SpawnMultipleProjectiles(ProjectileClass, FTransform(GetProjectileSpawnLocation()), InitialDirection, SavedTargets);
 }
