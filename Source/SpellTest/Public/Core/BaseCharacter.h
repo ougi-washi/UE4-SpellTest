@@ -56,22 +56,28 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Trace")
 	bool CrosshairTrace(FHitResult &OutHit, FVector &Direction, const ECollisionChannel CollisionChannel = ECC_Pawn, const float Distance = 2000.f, const bool bDebug = false);
+	/** Starts saving the targets to an array for later usage. (This will clear the targets array)*/
 	UFUNCTION(BlueprintCallable, Category = "Trace|Targetting")
 	void StartSavingTargets();
+	/** Process the saving by adding every target to the saved targets array. */
 	UFUNCTION(BlueprintCallable, Category = "Trace|Targetting")
 	void ProcessSavingTargets();
+	/** Ends the saving process and calls OnEndSavingTargets. */
 	UFUNCTION(BlueprintCallable, Category = "Trace|Targetting")
 	void EndSavingTargets();
+	/** Event called when End Saving Targets is called. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Trace|Targetting")
 	void OnEndSavingTargets(const TArray<AActor*>& TargetActors);
 	virtual void OnEndSavingTargets_Native(const TArray<AActor*>& TargetActors);
+	/** Add an actor to the saved targets array for later  usage. */
 	UFUNCTION(BlueprintCallable, Category = "Trace|Targetting")
 	void AddActorToSavedTargets(AActor* TargetActor);
+	/** event called when an actor has been added to the saved targets. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Trace|Targetting")
 	void OnAddActorToSavedTargets(AActor* TargetActor);
 	virtual void OnAddActorToSavedTargets_Native(AActor* TargetActor);
 	/** 
-	 * @return The vector representing the location of the spell spawning socket.
+	 * Gets the vector representing the location of the spell spawning socket.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	FVector GetProjectileSpawnLocation();
