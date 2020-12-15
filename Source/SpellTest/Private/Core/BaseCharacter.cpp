@@ -3,7 +3,9 @@
 
 #include "Core/BaseCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "Core/Projectile.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -31,10 +33,14 @@ void ABaseCharacter::Tick(float DeltaTime)
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
-bool ABaseCharacter::CrosshairTrace(FHitResult& OutHit, const float Distance, const bool bDebug)
+void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
+bool ABaseCharacter::CrosshairTrace(FHitResult& OutHit, FVector &Direction, const ECollisionChannel CollisionChannel, const float Distance, const bool bDebug)
 {
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController())) {
 		// Get viewport size
@@ -43,8 +49,7 @@ bool ABaseCharacter::CrosshairTrace(FHitResult& OutHit, const float Distance, co
 		PlayerController->GetViewportSize(ViewportSizeX, ViewportSizeY);
 		// Get the position in the middle of the screen (Cross-hair position in the 3D scene)
 		FVector CrosshairLocation_Start;
-		FVector CrosshairDirection;
-		PlayerController->DeprojectScreenPositionToWorld(ViewportSizeX / 2.f, ViewportSizeY / 2.f, CrosshairLocation_Start, CrosshairDirection);
+		PlayerController->DeprojectScreenPositionToWorld(ViewportSizeX / 2.f, ViewportSizeY / 2.f, CrosshairLocation_Start, Direction);
 		// Calculate the end position where the cross-hair is pointing at by a given distance
 		FVector CrosshairLocation_End = ((GetBaseAimRotation().Vector() * Distance) + CrosshairLocation_Start);
 		if (bDebug)
@@ -52,9 +57,31 @@ bool ABaseCharacter::CrosshairTrace(FHitResult& OutHit, const float Distance, co
 		if (UWorld* World = GetWorld()) {
 			FCollisionQueryParams CollisionParams;
 			CollisionParams.AddIgnoredActor(this);
-			return World->LineTraceSingleByChannel(OutHit, CrosshairLocation_Start, CrosshairLocation_End, ECC_Pawn, CollisionParams);
+			return World->LineTraceSingleByObjectType(OutHit, CrosshairLocation_Start, CrosshairLocation_End, CollisionChannel, CollisionParams);
 		}
 	}
 	return false;
 }
 
+void ABaseCharacter::SpawnProjectileByCrosshair(TSubclassOf<AProjectile> ProjectileClass)
+{
+	// Process the trace
+	FHitResult OutHit;
+	FVector CrosshairDirection;
+	CrosshairTrace(OutHit, CrosshairDirection, ECC_Pawn, TargettingRange);
+	// Set up the location and direction for the projectile spawn
+	FVector SpawnLocation = GetMesh()->GetSocketLocation(ProjectileSpawnSocket);
+	FVector InitialDirection = UKismetMathLibrary::GetDirectionUnitVector(SpawnLocation, OutHit.TraceEnd);
+	ServerSpawnProjectile(ProjectileClass, FTransform(SpawnLocation), InitialDirection, OutHit.GetActor());
+}
+
+void ABaseCharacter::ServerSpawnProjectile_Implementation(TSubclassOf<AProjectile> ProjectileClass, const FTransform& Transform, const FVector IntialDirection, AActor* TargetActor)
+{
+	if (UWorld* World = GetWorld()) {
+		FActorSpawnParameters ActorSpawnParams;
+		ActorSpawnParams.Owner = this;
+		AProjectile* Projectile = World->SpawnActor<AProjectile>(ProjectileClass, Transform, ActorSpawnParams);
+		if (Projectile)
+			Projectile->InitProjectile(IntialDirection, TargetActor);
+	}
+}
