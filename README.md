@@ -9,7 +9,6 @@ please check my game framework here : https://github.com/Hiro-KE/UE4-KizuEngine
 - Task 1 : Create a homing target lock system
   - When crosshair is on a player + Range (expose this variable in details pannel) can fire at the character
   - Can use Homing projectile component in unreal
-  - Has to work in multiplayer
   - Reference video - https://youtu.be/VvsTA_JFKo4?t=130
 
 - Task 2 : Highlight and Hit Target System
