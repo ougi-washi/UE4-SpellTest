@@ -1,6 +1,6 @@
 # UE4-SpellTest
-This is a test of a replicated projectile system that mimics Oath projectile.
-I have had it as a test and I am sharing it for whoever would like to implement a similar spell system.
+This is a test of a replicated projectile system that mimics Oath projectiles system.
+I have had it as a test/study and I am sharing it for whoever wants to implement a similar spell system.
 In case you're interested in a full implementation and a more detailed approach, 
 please check my game framework here : https://github.com/Hiro-KE/UE4-KizuEngine
 
